@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Render every theme's backgrounds, unlock image and previews from the SVG
+# templates in assets/, filling {{key}} tokens from that theme's colors.toml.
+# Uses sips on macOS and rsvg-convert on Linux. Output is committed, so this
+# only needs to run after an asset or a palette changes.
+
+set -euo pipefail
+
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+
+# Yinzer gold for the bridge mark: amber-400 on dark, amber-700 on light.
+GOLD="#fbbf24"
+GOLD_ON_LIGHT="#b45309"
+
+render() {
+  local svg="$1" png="$2"
+
+  if command -v rsvg-convert >/dev/null; then
+    rsvg-convert "$svg" -o "$png"
+  else
+    sips -s format png "$svg" --out "$png" >/dev/null
+  fi
+}
+
+resize() {
+  local png="$1" width="$2" height="$3"
+
+  if command -v magick >/dev/null; then
+    magick "$png" -resize "${width}x${height}" "$png"
+  else
+    sips -z "$height" "$width" "$png" >/dev/null
+  fi
+}
+
+# Fill {{key}} from colors.toml, plus any extra key=value pairs given.
+fill() {
+  local template="$1" colors="$2" out="$3"
+  shift 3
+  local script="$WORK/fill.sed" key value
+
+  : >"$script"
+  while IFS='=' read -r key value; do
+    key=$(echo "$key" | tr -d ' ')
+    value=$(echo "$value" | sed -E 's/^ *"//; s/".*$//')
+    [[ $key =~ ^[a-z_]+$ && $value =~ ^#[0-9a-fA-F]{6}$ ]] || continue
+    echo "s|{{$key}}|$value|g" >>"$script"
+  done <"$colors"
+
+  for pair in "$@"; do
+    echo "s|{{${pair%%=*}}}|${pair#*=}|g" >>"$script"
+  done
+
+  sed -f "$script" "$template" >"$out"
+
+  if grep -q '{{' "$out"; then
+    echo "Unfilled token in $template: $(grep -o '{{[^}]*}}' "$out" | sort -u | tr '\n' ' ')" >&2
+    exit 1
+  fi
+}
+
+color_of() {
+  sed -nE "s/^$1 *= *\"([^\"]*)\".*/\1/p" "$2"
+}
+
+for theme_dir in "$ROOT"/themes/*/; do
+  theme=$(basename "$theme_dir")
+  colors="$theme_dir/colors.toml"
+  echo "Rendering $theme"
+
+  # A night sky reads as dust on a light theme, and its "lighter" background
+  # is the darker one, so light themes drop the stars and glow from background.
+  # The bridge mark stays brand gold on the lock screen, whatever the accent.
+  if [[ $(color_of mode "$colors") == "light" ]]; then
+    mode_pairs=(stars=0 "glow_background=$(color_of background "$colors")")
+    mark=$GOLD_ON_LIGHT
+  else
+    mode_pairs=(stars=1 "glow_background=$(color_of lighter_background "$colors")")
+    mark=$GOLD
+  fi
+
+  mkdir -p "$theme_dir/backgrounds"
+  for template in "$ROOT"/assets/[0-9]-*.svg; do
+    name=$(basename "$template" .svg)
+    fill "$template" "$colors" "$WORK/$name.svg" "${mode_pairs[@]}"
+    render "$WORK/$name.svg" "$theme_dir/backgrounds/$name.png"
+  done
+
+  fill "$ROOT/assets/mark.svg" "$colors" "$WORK/unlock.svg" "mark=$mark" width=800 height=610 glow=3
+  render "$WORK/unlock.svg" "$theme_dir/unlock.png"
+
+  fill "$ROOT/assets/preview-unlock.svg" "$colors" "$WORK/preview-unlock.svg" "mark=$mark"
+  render "$WORK/preview-unlock.svg" "$theme_dir/preview-unlock.png"
+
+  cp "$theme_dir/backgrounds/1-the-point.png" "$theme_dir/preview.png"
+  resize "$theme_dir/preview.png" 2560 1440
+done
+
+# The boot splash and the repo's own logo use the gold mark.
+fill "$ROOT/assets/mark.svg" "$ROOT/themes/gumband/colors.toml" "$ROOT/branding/logo.svg" "mark=$GOLD" width=800 height=610 glow=3
+cp "$ROOT/themes/gumband/unlock.png" "$ROOT/branding/logo.png"

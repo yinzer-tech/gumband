@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="{{width}}" height="{{height}}" viewBox="10 46 160 122">
+	<defs>
+		<filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+			<feGaussianBlur stdDeviation="{{glow}}"/>
+		</filter>
+		<g id="mark" fill="none" stroke="{{mark}}" stroke-linecap="round" stroke-linejoin="round">
+			<path stroke-width="8" d="M28 112H152M62 66V120M118 66V120"/>
+			<path stroke-width="6" d="M62 66Q90 118 118 66M62 66Q46 96 30 110M118 66Q134 96 150 110"/>
+			<path stroke-width="3" d="M76 89V112M90 92V112M104 89V112M50 88V112M130 88V112"/>
+			<path stroke-width="5" opacity=".7" d="M40 134q10-6 20 0t20 0 20 0 20 0 20 0M56 150q10-6 20 0t20 0 20 0"/>
+		</g>
+	</defs>
+	<use href="#mark" opacity="0.6" filter="url(#glow)"/>
+	<use href="#mark"/>
+</svg>

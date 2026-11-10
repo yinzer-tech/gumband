@@ -1,0 +1,228 @@
+#!/bin/bash
+
+# Gumband: Yinzer Tech's Catalyst-styled layer over stock Omarchy.
+# Everything here goes through Omarchy's own extension points (user themes,
+# branding files, the Plymouth command, hooks), so Omarchy itself is never
+# patched and keeps updating normally.
+
+set -euo pipefail
+
+GUMBAND_PATH=${GUMBAND_PATH:-$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)}
+GUMBAND_STATE="$HOME/.local/state/gumband"
+OMARCHY_CONFIG="$HOME/.config/omarchy"
+THEMES=(gumband gumband-light)
+
+# Plymouth colors: the brand black and gold, kept apart from the desktop themes.
+PLYMOUTH_BG="#09090b"
+PLYMOUTH_FG="#fbbf24"
+
+# The Omarchy commands Gumband relies on. `gumband doctor` checks each exists.
+OMARCHY_COMMANDS=(omarchy-theme-set omarchy-plymouth-set omarchy-plymouth-reset omarchy-webapp-install)
+
+QUIET=0
+
+say() {
+  (( QUIET )) || echo "$@"
+}
+
+usage() {
+  cat <<EOF
+Usage: gumband <command>
+
+  apply [--quiet]   Link the themes, copy branding, install the update hook,
+                    and refresh the boot splash when the logo changed
+  update            Pull the latest Gumband and apply it
+  theme [light]     Switch to the Gumband theme (dark unless "light")
+  plymouth          Re-apply the Gumband boot splash and login screen
+  defaults          Offer the Yinzer Tech web apps and the vini CLI
+  doctor            Check that Omarchy still offers what Gumband uses
+  remove            Undo Gumband and go back to stock Omarchy branding
+EOF
+}
+
+require_omarchy() {
+  if [[ -z ${OMARCHY_PATH:-} || ! -d $OMARCHY_PATH ]] || ! command -v omarchy-theme-set >/dev/null; then
+    echo "Gumband needs Omarchy installed first: https://omarchy.org" >&2
+    exit 1
+  fi
+}
+
+# Themes are linked, not copied: Omarchy only strips Lua and terminal configs
+# from themes that carry their own .git, and a symlink to this checkout means
+# `gumband update` changes the theme in place.
+link_themes() {
+  local theme target link
+
+  mkdir -p "$OMARCHY_CONFIG/themes"
+  for theme in "${THEMES[@]}"; do
+    target="$GUMBAND_PATH/themes/$theme"
+    link="$OMARCHY_CONFIG/themes/$theme"
+
+    if [[ -e $link && ! -L $link ]]; then
+      mv "$link" "$link.bak.$(date +%s)"
+      say "Moved an existing $theme theme aside to $link.bak.*"
+    fi
+    ln -sfn "$target" "$link"
+  done
+}
+
+copy_branding() {
+  mkdir -p "$OMARCHY_CONFIG/branding"
+  cp "$GUMBAND_PATH/branding/about.txt" "$OMARCHY_CONFIG/branding/about.txt"
+  cp "$GUMBAND_PATH/branding/screensaver.txt" "$OMARCHY_CONFIG/branding/screensaver.txt"
+}
+
+install_hook() {
+  local dir="$OMARCHY_CONFIG/hooks/post-update.d"
+
+  mkdir -p "$dir"
+  cat >"$dir/gumband" <<EOF
+#!/bin/bash
+# Installed by Gumband: re-apply after Omarchy updates, which can reset branding.
+exec "$GUMBAND_PATH/bin/gumband" apply --quiet
+EOF
+  chmod 755 "$dir/gumband"
+}
+
+link_cli() {
+  mkdir -p "$HOME/.local/bin"
+  ln -sfn "$GUMBAND_PATH/bin/gumband" "$HOME/.local/bin/gumband"
+}
+
+logo_fingerprint() {
+  { cat "$GUMBAND_PATH/branding/logo.png"; echo "$PLYMOUTH_BG $PLYMOUTH_FG"; } | sha256sum | cut -d' ' -f1
+}
+
+set_plymouth() {
+  omarchy-plymouth-set "$PLYMOUTH_BG" "$PLYMOUTH_FG" "$GUMBAND_PATH/branding/logo.png"
+  mkdir -p "$GUMBAND_STATE"
+  logo_fingerprint >"$GUMBAND_STATE/plymouth"
+}
+
+# Setting Plymouth needs sudo and rebuilds the initramfs, so only do it when
+# the logo or colors changed since the last time Gumband set them.
+refresh_plymouth() {
+  if [[ $(cat "$GUMBAND_STATE/plymouth" 2>/dev/null) == "$(logo_fingerprint)" ]]; then
+    return
+  fi
+
+  if (( QUIET )) && ! sudo -n true 2>/dev/null; then
+    echo "Gumband boot splash is out of date; run: gumband plymouth" >&2
+    return
+  fi
+
+  set_plymouth
+}
+
+apply() {
+  [[ ${1:-} == "--quiet" ]] && QUIET=1
+  require_omarchy
+
+  link_themes
+  copy_branding
+  install_hook
+  link_cli
+  refresh_plymouth
+
+  say "Gumband applied."
+}
+
+update() {
+  git -C "$GUMBAND_PATH" pull --ff-only
+  exec "$GUMBAND_PATH/bin/gumband" apply
+}
+
+theme() {
+  require_omarchy
+
+  local name=gumband
+  [[ ${1:-} == "light" ]] && name=gumband-light
+
+  # Outside a desktop session (first boot, SSH) there is no shell to retint.
+  if [[ -z ${WAYLAND_DISPLAY:-} ]]; then
+    OMARCHY_THEME_HEADLESS=1 omarchy-theme-set "$name"
+  else
+    omarchy-theme-set "$name"
+  fi
+}
+
+defaults() {
+  require_omarchy
+  bash "$GUMBAND_PATH/defaults/yinzer-apps.sh"
+}
+
+doctor() {
+  local problems=0 command theme key file stock="${OMARCHY_PATH:-}/themes/matte-black/colors.toml"
+
+  # check <label> <command...>: run the command quietly, report ok or FAIL.
+  check() {
+    local label="$1"
+    shift
+    if "$@" >/dev/null 2>&1; then
+      echo "  ok    $label"
+    else
+      echo "  FAIL  $label"
+      problems=$((problems + 1))
+    fi
+  }
+
+  echo "Omarchy"
+  check "OMARCHY_PATH is set (${OMARCHY_PATH:-unset})" test -d "${OMARCHY_PATH:-/nonexistent}"
+  for command in "${OMARCHY_COMMANDS[@]}"; do
+    check "$command exists" command -v "$command"
+  done
+
+  # Every key a stock theme defines should be in ours, or the generated
+  # configs fall back to defaults that are not Gumband's.
+  if [[ -f $stock ]]; then
+    for theme in "${THEMES[@]}"; do
+      while read -r key; do
+        check "$theme defines $key" grep -qE "^$key *=" "$GUMBAND_PATH/themes/$theme/colors.toml"
+      done < <(sed -nE 's/^([a-z_]+) *=.*/\1/p' "$stock")
+    done
+  fi
+
+  echo "Gumband"
+  for theme in "${THEMES[@]}"; do
+    check "$theme theme is linked" test "$(readlink "$OMARCHY_CONFIG/themes/$theme")" == "$GUMBAND_PATH/themes/$theme"
+  done
+  for file in about.txt screensaver.txt; do
+    check "branding $file is current" cmp -s "$GUMBAND_PATH/branding/$file" "$OMARCHY_CONFIG/branding/$file"
+  done
+  check "post-update hook is installed" test -x "$OMARCHY_CONFIG/hooks/post-update.d/gumband"
+  check "boot splash is current" test "$(cat "$GUMBAND_STATE/plymouth" 2>/dev/null)" == "$(logo_fingerprint)"
+
+  (( problems == 0 ))
+}
+
+remove() {
+  require_omarchy
+
+  local theme
+  if [[ $(cat "$HOME/.local/state/omarchy/current/theme.name" 2>/dev/null) == gumband* ]]; then
+    omarchy-theme-set tokyo-night
+  fi
+
+  for theme in "${THEMES[@]}"; do
+    [[ -L $OMARCHY_CONFIG/themes/$theme ]] && rm "$OMARCHY_CONFIG/themes/$theme"
+  done
+  cp "$OMARCHY_PATH/icon.txt" "$OMARCHY_CONFIG/branding/about.txt"
+  cp "$OMARCHY_PATH/logo.txt" "$OMARCHY_CONFIG/branding/screensaver.txt"
+  rm -f "$OMARCHY_CONFIG/hooks/post-update.d/gumband" "$HOME/.local/bin/gumband"
+  omarchy-plymouth-reset
+  rm -rf "$GUMBAND_STATE"
+
+  echo "Gumband removed. Delete $GUMBAND_PATH to remove the checkout too."
+}
+
+case "${1:-}" in
+apply) shift; apply "$@" ;;
+update) update ;;
+theme) shift; theme "$@" ;;
+plymouth) require_omarchy; set_plymouth ;;
+defaults) defaults ;;
+doctor) doctor ;;
+remove) remove ;;
+-h | --help | help) usage ;;
+*) usage >&2; exit 1 ;;
+esac

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 1920 1080">
+	<defs>
+		<radialGradient id="bg" cx="0.5" cy="0.57" r="0.9">
+			<stop offset="0" stop-color="{{glow_background}}"/>
+			<stop offset="0.45" stop-color="{{background}}"/>
+			<stop offset="1" stop-color="{{darker_background}}"/>
+		</radialGradient>
+		<filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+			<feGaussianBlur stdDeviation="14"/>
+		</filter>
+		<!-- Allegheny and Monongahela meet at the Point and leave as the Ohio -->
+		<path id="allegheny" d="M-80 250C380 330 700 520 940 615"/>
+		<path id="monongahela" d="M-80 1010C400 920 700 720 940 615"/>
+		<path id="ohio" d="M940 615C1240 500 1560 560 2000 380"/>
+	</defs>
+
+	<rect width="1920" height="1080" fill="url(#bg)"/>
+
+	<g fill="none" stroke="{{muted}}" stroke-linecap="round">
+		<g stroke-width="70" opacity="0.06">
+			<use href="#allegheny"/><use href="#monongahela"/><use href="#ohio" stroke-width="110"/>
+		</g>
+		<g stroke-width="26" opacity="0.35" filter="url(#glow)">
+			<use href="#allegheny"/><use href="#monongahela"/><use href="#ohio" stroke-width="40"/>
+		</g>
+		<g stroke-width="5">
+			<use href="#allegheny"/><use href="#monongahela"/><use href="#ohio" stroke-width="8"/>
+		</g>
+		<g stroke-width="1.5" opacity="0.4">
+			<path d="M-80 290C380 370 690 550 930 640"/>
+			<path d="M-80 970C400 880 690 700 930 590"/>
+			<path d="M950 650C1250 540 1570 600 2000 420"/>
+			<path d="M950 580C1240 465 1550 520 2000 340"/>
+		</g>
+	</g>
+
+	<circle cx="940" cy="615" r="34" fill="{{accent}}" opacity="0.4" filter="url(#glow)"/>
+	<circle cx="940" cy="615" r="11" fill="{{accent}}"/>
+</svg>

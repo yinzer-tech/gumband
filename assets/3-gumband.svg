@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 1920 1080">
+	<defs>
+		<g id="mark" fill="none" stroke="{{muted}}" stroke-linecap="round" stroke-linejoin="round">
+			<path stroke-width="8" d="M28 112H152M62 66V120M118 66V120"/>
+			<path stroke-width="6" d="M62 66Q90 118 118 66M62 66Q46 96 30 110M118 66Q134 96 150 110"/>
+			<path stroke-width="3" d="M76 89V112M90 92V112M104 89V112M50 88V112M130 88V112"/>
+			<path stroke-width="5" opacity=".7" d="M40 134q10-6 20 0t20 0 20 0 20 0 20 0M56 150q10-6 20 0t20 0 20 0"/>
+		</g>
+		<pattern id="tiles" width="220" height="160" patternUnits="userSpaceOnUse" patternTransform="translate(-50 -20)">
+			<use href="#mark" transform="translate(20 -27)"/>
+		</pattern>
+		<radialGradient id="fade" cx="0.5" cy="0.5" r="0.6">
+			<stop offset="0" stop-color="{{background}}" stop-opacity="1"/>
+			<stop offset="0.5" stop-color="{{background}}" stop-opacity="0.7"/>
+			<stop offset="1" stop-color="{{background}}" stop-opacity="0"/>
+		</radialGradient>
+		<filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+			<feGaussianBlur stdDeviation="6"/>
+		</filter>
+	</defs>
+
+	<rect width="1920" height="1080" fill="{{background}}"/>
+	<rect width="1920" height="1080" fill="url(#tiles)" opacity="0.07"/>
+	<rect width="1920" height="1080" fill="url(#fade)"/>
+
+	<g transform="translate(960 545) scale(2.4) translate(-90 -107)">
+		<use href="#mark" opacity="0.55" filter="url(#glow)"/>
+		<use href="#mark"/>
+	</g>
+</svg>

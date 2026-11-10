@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 1920 1080">
+	<defs>
+		<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="{{darker_background}}"/>
+			<stop offset="0.6" stop-color="{{background}}"/>
+			<stop offset="0.74" stop-color="{{lighter_background}}"/>
+			<stop offset="1" stop-color="{{darker_background}}"/>
+		</linearGradient>
+		<filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+			<feGaussianBlur stdDeviation="9"/>
+		</filter>
+		<filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+			<feGaussianBlur stdDeviation="3"/>
+		</filter>
+		<g id="bridge" fill="none" stroke="{{muted}}" stroke-linecap="round" stroke-linejoin="round">
+			<path stroke-width="10" d="M180 760H1740"/>
+			<path stroke-width="14" d="M700 470V800M1220 470V800"/>
+			<path stroke-width="8" d="M700 470Q960 1010 1220 470M700 470Q590 680 200 752M1220 470Q1330 680 1720 752"/>
+			<path stroke-width="4" d="M780 611V760M860 700V760M960 740V760M1060 700V760M1140 611V760M601 590V760M451 680V760M1319 590V760M1469 680V760"/>
+		</g>
+	</defs>
+
+	<rect width="1920" height="1080" fill="url(#sky)"/>
+
+	<g fill="{{foreground}}" opacity="{{stars}}">
+		<circle cx="0" cy="396" r="1.3" opacity="0.38"/>
+		<circle cx="1400" cy="229" r="1.4" opacity="0.70"/>
+		<circle cx="1450" cy="233" r="2.0" opacity="0.63"/>
+		<circle cx="1568" cy="104" r="1.5" opacity="0.67"/>
+		<circle cx="1340" cy="23" r="2.0" opacity="0.53"/>
+		<circle cx="1771" cy="347" r="1.0" opacity="0.56"/>
+		<circle cx="1772" cy="296" r="2.0" opacity="0.60"/>
+		<circle cx="1607" cy="143" r="1.1" opacity="0.43"/>
+		<circle cx="823" cy="127" r="2.5" opacity="0.58"/>
+		<circle cx="1076" cy="219" r="1.6" opacity="0.37"/>
+		<circle cx="1745" cy="24" r="1.5" opacity="0.46"/>
+		<circle cx="779" cy="122" r="1.5" opacity="0.50"/>
+		<circle cx="639" cy="229" r="1.9" opacity="0.39"/>
+		<circle cx="1740" cy="197" r="2.4" opacity="0.63"/>
+		<circle cx="1218" cy="222" r="1.7" opacity="0.66"/>
+		<circle cx="1127" cy="151" r="1.4" opacity="0.48"/>
+		<circle cx="149" cy="175" r="1.1" opacity="0.30"/>
+		<circle cx="1913" cy="95" r="1.9" opacity="0.34"/>
+		<circle cx="878" cy="255" r="1.0" opacity="0.80"/>
+		<circle cx="1461" cy="118" r="0.8" opacity="0.40"/>
+		<circle cx="146" cy="31" r="1.9" opacity="0.39"/>
+		<circle cx="1694" cy="101" r="1.5" opacity="0.79"/>
+		<circle cx="227" cy="210" r="0.8" opacity="0.80"/>
+		<circle cx="361" cy="317" r="1.8" opacity="0.66"/>
+		<circle cx="511" cy="96" r="1.2" opacity="0.59"/>
+		<circle cx="101" cy="331" r="2.1" opacity="0.68"/>
+		<circle cx="957" cy="14" r="1.0" opacity="0.80"/>
+		<circle cx="251" cy="296" r="2.4" opacity="0.27"/>
+		<circle cx="1469" cy="180" r="1.2" opacity="0.69"/>
+		<circle cx="381" cy="134" r="2.6" opacity="0.85"/>
+		<circle cx="1239" cy="58" r="1.7" opacity="0.58"/>
+		<circle cx="858" cy="71" r="2.0" opacity="0.56"/>
+		<circle cx="42" cy="88" r="1.6" opacity="0.52"/>
+		<circle cx="306" cy="42" r="1.2" opacity="0.61"/>
+		<circle cx="455" cy="248" r="1.5" opacity="0.44"/>
+		<circle cx="590" cy="38" r="2.2" opacity="0.70"/>
+		<circle cx="688" cy="330" r="1.1" opacity="0.47"/>
+	</g>
+
+	<!-- Downtown behind the bridge, PPG Place spires on the left -->
+	<path fill="{{lighter_background}}" opacity="0.85" d="M740 760V660h20v-28l8-14 8 14v28h14v-40l8-14 8 14v40h12V600h46v-30h30v30h10v-82h44v82h16V560h40v-24h20v24h12v200zM1000 760V610h56v-36h38v36h22v-52h42v202z"/>
+	<g fill="{{muted}}" opacity="0.35">
+		<rect x="876" y="590" width="4" height="6"/><rect x="888" y="610" width="4" height="6"/><rect x="928" y="540" width="4" height="6"/>
+		<rect x="940" y="572" width="4" height="6"/><rect x="996" y="590" width="4" height="6"/><rect x="1022" y="630" width="4" height="6"/>
+		<rect x="1070" y="596" width="4" height="6"/><rect x="1132" y="576" width="4" height="6"/><rect x="1144" y="612" width="4" height="6"/>
+	</g>
+
+	<!-- Reflection on the river -->
+	<g transform="translate(0 1560) scale(1 -1)" opacity="0.1" filter="url(#soft)">
+		<use href="#bridge"/>
+	</g>
+
+	<g fill="none" stroke="{{muted}}" stroke-linecap="round" opacity="0.35">
+		<path stroke-width="3" d="M260 850q40-14 80 0t80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0"/>
+		<path stroke-width="2.5" opacity="0.7" d="M420 920q40-14 80 0t80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0"/>
+		<path stroke-width="2" opacity="0.45" d="M620 990q40-14 80 0t80 0 80 0 80 0 80 0 80 0 80 0 80 0 80 0"/>
+	</g>
+
+	<use href="#bridge" opacity="0.55" filter="url(#glow)"/>
+	<use href="#bridge"/>
+</svg>
