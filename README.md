@@ -71,10 +71,6 @@ OMARCHY_FIXTURE=~/src/omarchy bats test/         # against a real upstream check
 
 CI runs both every week, and also checks that upstream still ships every command and hook Gumband calls.
 
-## Raspberry Pi
-
-Pi images are built in the sibling repo [gumband-pi](https://github.com/yinzer-tech/gumband-pi). They boot into Omarchy with Gumband already applied.
-
 ## License
 
 MIT. Omarchy is © its authors and is also MIT. Gumband doesn't contain or modify Omarchy code.

@@ -6,8 +6,7 @@
 #
 # or from a checkout: ./install.sh
 #
-# GUMBAND_DEFAULTS=0 skips the web app / vini prompt (used by unattended
-# installs such as the Raspberry Pi first boot).
+# GUMBAND_DEFAULTS=0 skips the web app / vini prompt (for unattended installs).
 
 set -euo pipefail
 
